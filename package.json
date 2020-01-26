@@ -1,0 +1,14 @@
+{
+  "name": "rps_game",
+  "version": "1.0.0",
+  "description": "Rock Paper Scissor game",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Salvis Reimanis",
+  "license": "ISC",
+  "dependencies": {
+    "socket.io": "^2.3.0"
+  }
+}

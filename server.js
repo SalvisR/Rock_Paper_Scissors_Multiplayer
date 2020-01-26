@@ -1,0 +1,63 @@
+const io = require('socket.io')(3000);
+
+let users = [];
+let results = [];
+io.on('connection', socket => {
+  socket.on('set-name', name => {
+    socket.name = name;
+  });
+
+  socket.on('new-user-connected', data => {
+    const newUser = {
+      id: socket.id,
+      name: data
+    };
+    users.push(newUser);
+
+    socket.broadcast.emit('add-new-user', newUser);
+  });
+
+  socket.emit('get-all-users', users);
+
+  socket.on('disconnect', () => {
+    users = users.filter(user => user.id !== socket.id);
+    socket.broadcast.emit('user-disconnect', socket.id);
+  });
+
+  socket.on('send-invite', id => {
+    const roomName = `${id}-${socket.id}`;
+    io.to(id).emit('invite', {
+      name: socket.name,
+      id: socket.id,
+      room: roomName
+    });
+  });
+
+  socket.on('accept-invite', data => {
+    socket.join(data.room);
+    io.to(data.id).emit('accepted-invite', {
+      id: socket.id,
+      room: data.room
+    });
+  });
+
+  socket.on('join-room', room => {
+    socket.join(room);
+  });
+
+  socket.on('send-choise', data => {
+    const room = Object.keys(socket.rooms);
+
+    const choise = {
+      game: room[1],
+      name: socket.name,
+      choise: data.choise
+    };
+    results.push(choise);
+    io.to(room[1]).emit('get-choises', [room[1], results]);
+  });
+
+  socket.on('clear-results', game => {
+    results = results.filter(res => res.game !== game);
+  });
+});
