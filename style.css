@@ -241,3 +241,23 @@ li div {
     transform: translate(-50%, 0);
     width: initial;
 }
+
+.small {
+    font-size: 1rem;
+    color: rgb(255, 68, 68);
+    font-weight: normal;
+}
+
+.fadeOut {
+    animation: fade 4s forwards;
+}
+
+@keyframes fade {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}

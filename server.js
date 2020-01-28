@@ -22,6 +22,14 @@ io.on('connection', socket => {
   socket.on('disconnect', () => {
     users = users.filter(user => user.id !== socket.id);
     socket.broadcast.emit('user-disconnect', socket.id);
+
+    const rooms = Object.keys(io.sockets.adapter.rooms);
+    rooms.forEach(room => {
+      if (room.includes(socket.id)) {
+        io.to(room).emit('opponent-left-game', 'Your opponent left room');
+      }
+    });
+
   });
 
   socket.on('send-invite', id => {
@@ -41,8 +49,23 @@ io.on('connection', socket => {
     });
   });
 
+  socket.on('refuse-invite', id => {
+    io.to(id).emit('refuse', socket.name);
+  });
+
   socket.on('join-room', room => {
     socket.join(room);
+  });
+
+  socket.on('leave-room', id => {
+    const rooms = Object.keys(io.sockets.sockets[id].rooms).filter(room => room !== socket.id);
+
+    rooms.forEach(room => {
+      if (room !== socket.id) {
+        socket.leave(room);
+        io.to(room).emit('opponent-left-game', 'Your opponent left room');
+      }
+    });
   });
 
   socket.on('send-choise', data => {
@@ -54,6 +77,7 @@ io.on('connection', socket => {
       choise: data.choise,
       user_id: data.id
     };
+
     results.push(choise);
     io.to(room[1]).emit('get-choises', [room[1], results]);
   });

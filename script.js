@@ -69,8 +69,6 @@ socket.on('invite', data => {
   // Show popup for accept or refuse game invite
   createPopup(data.name);
 
-  const acceptBtn = document.getElementById('accept');
-  const refuseBtn = document.getElementById('refuse');
   const btns = document.getElementById('popupBtns');
   btns.addEventListener('click', e => {
     e.preventDefault();
@@ -79,9 +77,25 @@ socket.on('invite', data => {
       document.querySelector('.popup').remove();
       game.style.display = 'block';
     } else {
-      console.log('Invite refused');
+      socket.emit('refuse-invite', data.id);
+      document.querySelector('.popup').remove();
     }
   });
+});
+
+socket.on('refuse', name => {
+  const popup = document.createElement('div');
+  const text = document.createElement('p');
+  popup.classList.add('popup');
+  popup.classList.add('fadeOut');
+  text.textContent = `${name} refused your invite ☹`;
+  text.style.marginTop = '3rem';
+  popup.append(text);
+  body.append(popup);
+  setTimeout(() => {
+    document.querySelector('.popup').remove();
+  }, 4000);
+
 });
 
 socket.on('accepted-invite', data => {
@@ -147,10 +161,7 @@ socket.on('get-choises', data => {
   const res = data[1].filter(result => result.game === data[0]);
 
   if (res.length > 1) {
-    console.log(socket.id);
-    console.log(res);
     const opponent = res.filter(opp => opp.user_id !== socket.id);
-    console.log(opponent[0].choise);
     showOpponentChoise(opponent[0].choise);
 
     const winner = getWinner(res);
@@ -161,18 +172,15 @@ socket.on('get-choises', data => {
 });
 
 const getWinner = data => {
-  console.log(data);
 
   if (data[0].choise === data[1].choise) {
-    console.log('Draw!');
+    return 'draw';
   } else {
     if (data[0].choise === 'rock') {
 
       if (data[1].choise === 'paper') {
-        console.log(`Winner: ${data[1].name}`);
         return data[1].user_id;
       } else {
-        console.log(`Winner: ${data[0].name}`);
         return data[0].user_id;
       }
 
@@ -181,20 +189,16 @@ const getWinner = data => {
     if (data[0].choise === 'paper') {
 
       if (data[1].choise === 'scissors') {
-        console.log(`Winner: ${data[1].name}`);
         return data[1].user_id;
       } else {
-        console.log(`Winner: ${data[0].name}`);
         return data[0].user_id;
       }
     }
     if (data[0].choise === 'scissors') {
 
       if (data[1].choise === 'rock') {
-        console.log(`Winner: ${data[1].name}`);
         return data[1].user_id;
       } else {
-        console.log(`Winner: ${data[0].name}`);
         return data[0].user_id;
       }
     }
@@ -203,14 +207,19 @@ const getWinner = data => {
 
 const showeWinnerMessage = (winner) => {
   let msg = '';
-
-  if (winner === socket.id) {
-    msg = 'Congratulations, You Won!';
+  if (winner === 'draw') {
+    msg = 'Draw!'
     message.classList.add('winner');
   } else {
-    msg = 'You lose!'
-    message.classList.add('loser');
+    if (winner === socket.id) {
+      msg = 'Congratulations, You Won!';
+      message.classList.add('winner');
+    } else {
+      msg = 'You lose!'
+      message.classList.add('loser');
+    }
   }
+
 
   message.textContent = msg;
 
@@ -244,4 +253,16 @@ exit.addEventListener('click', function () {
   }
 
   game.style.display = 'none';
+
+  socket.emit('leave-room', socket.id);
+
 });
+
+socket.on('opponent-left-game', () => {
+  message.textContent = `Your opponent left game!
+  (After 10 seconds your game will end)`;
+  message.classList.add('small');
+  setTimeout(() => {
+    exit.click();
+  }, 10000);
+})
