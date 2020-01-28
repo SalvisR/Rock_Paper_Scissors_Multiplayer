@@ -51,7 +51,8 @@ io.on('connection', socket => {
     const choise = {
       game: room[1],
       name: socket.name,
-      choise: data.choise
+      choise: data.choise,
+      user_id: data.id
     };
     results.push(choise);
     io.to(room[1]).emit('get-choises', [room[1], results]);

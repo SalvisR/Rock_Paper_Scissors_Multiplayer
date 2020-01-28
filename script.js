@@ -4,9 +4,12 @@ const socket = io('http://localhost:3000');
 const userList = document.getElementById('userList');
 const body = document.querySelector('body');
 const game = document.querySelector('.game');
-const rock = document.querySelector('#rock');
-const papper = document.querySelector('#papper');
-const scissors = document.querySelector('#scissors');
+const username = document.querySelector('.username');
+const buttons = document.querySelectorAll('.choises button');
+const message = document.querySelector('.message');
+const playAgainBtn = document.querySelector('.play-again');
+const exit = document.querySelector('.exit');
+
 let name = prompt('Enter your name');
 while (!name) {
   name = prompt('Enter your name');
@@ -15,6 +18,8 @@ while (!name) {
 socket.emit('new-user-connected', name);
 socket.emit('set-name', name);
 socket.on('get-all-users', data => {
+  username.textContent = `Username: ${name}`;
+
   data.forEach(user => {
     const li = document.createElement('li');
     const span = document.createElement('span');
@@ -109,49 +114,134 @@ const createPopup = name => {
 };
 
 // Game table
-game.addEventListener('click', e => {
-  e.preventDefault();
-  socket.emit('send-choise', {
-    id: socket.id,
-    name: socket.name,
-    choise: e.target.value
+const disableBtn = () => {
+  buttons.forEach(button => {
+    button.disabled = true;
+  });
+}
+
+buttons.forEach(btn => {
+  btn.addEventListener('click', function () {
+    this.classList.add('selected');
+
+    socket.emit('send-choise', {
+      id: socket.id,
+      name: socket.name,
+      choise: this.getAttribute('value'),
+    });
+
+
+    disableBtn();
   });
 });
 
+const showOpponentChoise = (image) => {
+  const img = document.createElement('img');
+  img.src = `img/${image}.png`;
+
+  document.querySelector('.opponent').appendChild(img);
+}
+
 socket.on('get-choises', data => {
+
   const res = data[1].filter(result => result.game === data[0]);
+
   if (res.length > 1) {
-    getWinner(res);
+    console.log(socket.id);
+    console.log(res);
+    const opponent = res.filter(opp => opp.user_id !== socket.id);
+    console.log(opponent[0].choise);
+    showOpponentChoise(opponent[0].choise);
+
+    const winner = getWinner(res);
+    showeWinnerMessage(winner);
+
     socket.emit('clear-results', data[0]);
   }
 });
 
 const getWinner = data => {
+  console.log(data);
+
   if (data[0].choise === data[1].choise) {
     console.log('Draw!');
   } else {
     if (data[0].choise === 'rock') {
-      if (data[1].choise === 'papper') {
+
+      if (data[1].choise === 'paper') {
         console.log(`Winner: ${data[1].name}`);
+        return data[1].user_id;
       } else {
         console.log(`Winner: ${data[0].name}`);
+        return data[0].user_id;
       }
 
     }
 
-    if (data[0].choise === 'papper') {
+    if (data[0].choise === 'paper') {
+
       if (data[1].choise === 'scissors') {
         console.log(`Winner: ${data[1].name}`);
+        return data[1].user_id;
       } else {
         console.log(`Winner: ${data[0].name}`);
+        return data[0].user_id;
       }
     }
     if (data[0].choise === 'scissors') {
+
       if (data[1].choise === 'rock') {
         console.log(`Winner: ${data[1].name}`);
+        return data[1].user_id;
       } else {
         console.log(`Winner: ${data[0].name}`);
+        return data[0].user_id;
       }
     }
   }
 }
+
+const showeWinnerMessage = (winner) => {
+  let msg = '';
+
+  if (winner === socket.id) {
+    msg = 'Congratulations, You Won!';
+    message.classList.add('winner');
+  } else {
+    msg = 'You lose!'
+    message.classList.add('loser');
+  }
+
+  message.textContent = msg;
+
+  playAgainBtn.style.display = 'block';
+}
+
+playAgainBtn.addEventListener('click', () => {
+  document.querySelector('.selected').classList.remove('selected');
+  message.textContent = '';
+  message.classList.remove('winner');
+  message.classList.remove('loser');
+  document.querySelector('.opponent img').remove();
+  buttons.forEach(btn => {
+    btn.disabled = false;
+  });
+});
+
+exit.addEventListener('click', function () {
+  if (document.querySelector('.selected')) {
+    document.querySelector('.selected').classList.remove('selected');
+  }
+  message.textContent = '';
+  message.classList.remove('winner');
+  message.classList.remove('loser');
+
+  if (document.querySelector('.opponent img')) {
+    document.querySelector('.opponent img').remove();
+    buttons.forEach(btn => {
+      btn.disabled = false;
+    });
+  }
+
+  game.style.display = 'none';
+});
