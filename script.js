@@ -30,6 +30,10 @@ socket.on('get-all-users', data => {
     li.setAttribute('id', user.id);
     btn.setAttribute('value', user.id);
     btn.classList.add('play');
+    btn.disabled = user.status;
+    if (user.status) {
+      btn.style.display = 'none';
+    }
     li.append(span);
     div.textContent = `${user.name}`;
     div.append(btn);
@@ -101,6 +105,19 @@ socket.on('refuse', name => {
 socket.on('accepted-invite', data => {
   socket.emit('join-room', data.room);
   game.style.display = 'block';
+});
+
+socket.on('playing', data => {
+  const buttons = document.querySelectorAll('.play');
+
+  buttons.forEach(btn => {
+    data.forEach(id => {
+      if (btn.value === id) {
+        btn.disabled = true;
+        btn.style.display = 'none';
+      }
+    });
+  });
 });
 
 const createPopup = name => {
@@ -255,7 +272,17 @@ exit.addEventListener('click', function () {
   game.style.display = 'none';
 
   socket.emit('leave-room', socket.id);
+});
 
+socket.on('end-game', id => {
+  const buttons = document.querySelectorAll('.play');
+
+  buttons.forEach(btn => {
+    if (btn.value === id) {
+      btn.disabled = false;
+      btn.style.display = 'block';
+    }
+  });
 });
 
 socket.on('opponent-left-game', () => {

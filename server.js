@@ -10,7 +10,8 @@ io.on('connection', socket => {
   socket.on('new-user-connected', data => {
     const newUser = {
       id: socket.id,
-      name: data
+      name: data,
+      status: false
     };
     users.push(newUser);
 
@@ -29,7 +30,6 @@ io.on('connection', socket => {
         io.to(room).emit('opponent-left-game', 'Your opponent left room');
       }
     });
-
   });
 
   socket.on('send-invite', id => {
@@ -42,6 +42,12 @@ io.on('connection', socket => {
   });
 
   socket.on('accept-invite', data => {
+    const player1 = users.map(user => user.id).indexOf(data.id);
+    const player2 = users.map(user => user.id).indexOf(socket.id);
+    users[player1].status = true;
+    users[player2].status = true;
+    io.sockets.emit('playing', [socket.id, data.id]);
+
     socket.join(data.room);
     io.to(data.id).emit('accepted-invite', {
       id: socket.id,
@@ -58,7 +64,9 @@ io.on('connection', socket => {
   });
 
   socket.on('leave-room', id => {
-    const rooms = Object.keys(io.sockets.sockets[id].rooms).filter(room => room !== socket.id);
+    const rooms = Object.keys(io.sockets.sockets[id].rooms).filter(
+      room => room !== socket.id
+    );
 
     rooms.forEach(room => {
       if (room !== socket.id) {
@@ -66,6 +74,10 @@ io.on('connection', socket => {
         io.to(room).emit('opponent-left-game', 'Your opponent left room');
       }
     });
+
+    const index = users.map(user => user.id).indexOf(id);
+    users[index].status = false;
+    io.sockets.emit('end-game', id);
   });
 
   socket.on('send-choise', data => {
