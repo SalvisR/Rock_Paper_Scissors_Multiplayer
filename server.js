@@ -33,6 +33,11 @@ io.on('connection', socket => {
   });
 
   socket.on('send-invite', id => {
+    const player = users.map(user => user.id).indexOf(id);
+    if (users[player].status) {
+      return;
+    }
+
     const roomName = `${id}-${socket.id}`;
     io.to(id).emit('invite', {
       name: socket.name,

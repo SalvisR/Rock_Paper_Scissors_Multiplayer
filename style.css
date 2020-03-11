@@ -192,6 +192,7 @@ li div {
     transition: all 0.5s ease;
     position: relative;
     left: 0;
+    cursor: pointer;
 }
 
 .selected {
