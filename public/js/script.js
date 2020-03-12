@@ -15,49 +15,40 @@ while (!name) {
   name = prompt('Enter your name');
 }
 
+const createPlayerElement = user => {
+  const li = document.createElement('li');
+  const span = document.createElement('span');
+  const div = document.createElement('div');
+  const btn = document.createElement('button');
+
+  btn.innerText = 'Play';
+  li.setAttribute('id', user.id);
+  btn.setAttribute('value', user.id);
+  btn.classList.add('play');
+  btn.disabled = user.status;
+  if (user.status) {
+    btn.style.display = 'none';
+  }
+  li.append(span);
+  div.classList.add('player');
+  div.textContent = `${user.name}`;
+  div.append(btn);
+  li.append(div);
+
+  userList.append(li);
+};
+
 socket.emit('new-user-connected', name);
 socket.emit('set-name', name);
 socket.on('get-all-users', data => {
   username.textContent = `Username: ${name}`;
 
   data.forEach(user => {
-    const li = document.createElement('li');
-    const span = document.createElement('span');
-    const div = document.createElement('div');
-    const btn = document.createElement('button');
-
-    btn.innerText = 'Play';
-    li.setAttribute('id', user.id);
-    btn.setAttribute('value', user.id);
-    btn.classList.add('play');
-    btn.disabled = user.status;
-    if (user.status) {
-      btn.style.display = 'none';
-    }
-    li.append(span);
-    div.textContent = `${user.name}`;
-    div.append(btn);
-    li.append(div);
-
-    userList.append(li);
+    createPlayerElement(user);
   });
 
   socket.on('add-new-user', data => {
-    const li = document.createElement('li');
-    const span = document.createElement('span');
-    const div = document.createElement('div');
-    const btn = document.createElement('button');
-
-    btn.innerText = 'Play';
-    li.setAttribute('id', data.id);
-    btn.setAttribute('value', data.id);
-    btn.classList.add('play');
-    li.append(span);
-    div.textContent = `${data.name}`;
-    div.append(btn);
-    li.append(div);
-
-    userList.append(li);
+    createPlayerElement(data);
   });
 });
 
@@ -67,8 +58,11 @@ socket.on('user-disconnect', user => {
 
 userList.addEventListener('click', e => {
   e.preventDefault();
-  socket.emit('send-invite', e.target.value);
+  if (e.target.classList.contains('play')) {
+    socket.emit('send-invite', e.target.value);
+  }
 });
+
 socket.on('invite', data => {
   // Show popup for accept or refuse game invite
   createPopup(data.name);
@@ -99,7 +93,6 @@ socket.on('refuse', name => {
   setTimeout(() => {
     document.querySelector('.popup').remove();
   }, 4000);
-
 });
 
 socket.on('accepted-invite', data => {
@@ -149,32 +142,30 @@ const disableBtn = () => {
   buttons.forEach(button => {
     button.disabled = true;
   });
-}
+};
 
 buttons.forEach(btn => {
-  btn.addEventListener('click', function () {
+  btn.addEventListener('click', function() {
     this.classList.add('selected');
 
     socket.emit('send-choise', {
       id: socket.id,
       name: socket.name,
-      choise: this.getAttribute('value'),
+      choise: this.getAttribute('value')
     });
-
 
     disableBtn();
   });
 });
 
-const showOpponentChoise = (image) => {
+const showOpponentChoise = image => {
   const img = document.createElement('img');
   img.src = `img/${image}.png`;
 
   document.querySelector('.opponent').appendChild(img);
-}
+};
 
 socket.on('get-choises', data => {
-
   const res = data[1].filter(result => result.game === data[0]);
 
   if (res.length > 1) {
@@ -189,22 +180,18 @@ socket.on('get-choises', data => {
 });
 
 const getWinner = data => {
-
   if (data[0].choise === data[1].choise) {
     return 'draw';
   } else {
     if (data[0].choise === 'rock') {
-
       if (data[1].choise === 'paper') {
         return data[1].user_id;
       } else {
         return data[0].user_id;
       }
-
     }
 
     if (data[0].choise === 'paper') {
-
       if (data[1].choise === 'scissors') {
         return data[1].user_id;
       } else {
@@ -212,7 +199,6 @@ const getWinner = data => {
       }
     }
     if (data[0].choise === 'scissors') {
-
       if (data[1].choise === 'rock') {
         return data[1].user_id;
       } else {
@@ -220,28 +206,27 @@ const getWinner = data => {
       }
     }
   }
-}
+};
 
-const showeWinnerMessage = (winner) => {
+const showeWinnerMessage = winner => {
   let msg = '';
   if (winner === 'draw') {
-    msg = 'Draw!'
+    msg = 'Draw!';
     message.classList.add('winner');
   } else {
     if (winner === socket.id) {
       msg = 'Congratulations, You Won!';
       message.classList.add('winner');
     } else {
-      msg = 'You lose!'
+      msg = 'You lose!';
       message.classList.add('loser');
     }
   }
 
-
   message.textContent = msg;
 
   playAgainBtn.style.display = 'block';
-}
+};
 
 playAgainBtn.addEventListener('click', () => {
   document.querySelector('.selected').classList.remove('selected');
@@ -254,7 +239,7 @@ playAgainBtn.addEventListener('click', () => {
   });
 });
 
-exit.addEventListener('click', function () {
+exit.addEventListener('click', function() {
   if (document.querySelector('.selected')) {
     document.querySelector('.selected').classList.remove('selected');
   }
@@ -292,4 +277,4 @@ socket.on('opponent-left-game', () => {
   setTimeout(() => {
     exit.click();
   }, 10000);
-})
+});

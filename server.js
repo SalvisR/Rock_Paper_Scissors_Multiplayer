@@ -1,4 +1,13 @@
-const io = require('socket.io')(3000);
+const app = require('express')();
+const express = require('express');
+const server = require('http').Server(app);
+const io = require('socket.io')(server);
+const path = require('path');
+
+const port = 3000;
+server.listen(port);
+
+app.use(express.static(path.join(__dirname, '/public')));
 
 let users = [];
 let results = [];
