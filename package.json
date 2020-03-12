@@ -4,7 +4,7 @@
   "description": "Rock Paper Scissor game",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
   "author": "Salvis Reimanis",
   "license": "ISC",
